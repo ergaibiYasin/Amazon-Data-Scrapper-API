@@ -1,8 +1,12 @@
 const express = require('express');
 const request = require('request-promise');
+// const cheerio = require('cheerio');
+// const axios = require('axios');
+const puppeteer = require('puppeteer');
+
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8080;
 
 const generateScraperUrl = (apiKey) => `https://api.scraperapi.com?api_key=${apiKey}&autoparse=true`;
 
@@ -12,13 +16,77 @@ app.get('/', (req, res) => {
     res.send('Welcome to Amazon Data Scrapper API.'); 
 });
 
+//---------------------------------------------------------------------------
+app.get('/amazon/products/:productId', async(req, res) => {
+    const { productId } = req.params;
+    console.log(productId);
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    // Navigate to Amazon product page
+    await page.goto(`https://www.amazon.com/dp/${productId}`);
+
+    console.log(page);
+    
+    // // Wait for product title to be visible
+    // await page.waitForSelector('#productTitle');
+
+    // // Scrape product information
+    // const productTitle = await page.$eval('#productTitle', el => el.innerText.trim());
+    // const productPrice = await page.$eval('#priceblock_ourprice', el => el.innerText.trim());
+    // const productImage = await page.$eval('#landingImage', el => el.getAttribute('src'));
+
+    // console.log('Product Title:', productTitle);
+    // console.log('Product Price:', productPrice);
+    // console.log('Product Image:', productImage);
+    
+    await browser.close();
+
+    // const { api_key } = req.query;
+    // const url = `${generateScraperUrl(api_key)}&url=https://www.aliexpress.com/item/${productId}.html`;
+    // console.log('url    ' + url);
+
+    // try {
+    //     const response = await request(url);
+    //     console.log('response   ' + response.data);
+    //     res.json(JSON.parse(response));
+    //     // res.json(response.data);
+
+    // } catch (error) {
+    //     res.json(error);
+    // }
+});
+
+
+//---------------------------------------------------------------------------
+
+// GET Product Details
+app.get('/aliexpress/products/:productId', async(req, res) => {
+    const { productId } = req.params;
+    const { api_key } = req.query;
+    const url = `${generateScraperUrl(api_key)}&url=https://www.aliexpress.com/item/${productId}.html`;
+    console.log('url    ' + url);
+
+    try {
+        const response = await request(url);
+        console.log('response   ' + response.data);
+        res.json(JSON.parse(response));
+        // res.json(response.data);
+
+    } catch (error) {
+        res.json(error);
+    }
+});
+//---------------------------------------------------------------------------
+
 // GET Product Details
 app.get('/products/:productId', async(req, res) => {
     const { productId } = req.params;
     const { api_key } = req.query;
+    const url = `${generateScraperUrl(api_key)}&url=https://www.amazon.com/dp/${productId}`;
+    console.log('url    ' + url);
 
     try {
-        const response = await request(`${generateScraperUrl(api_key)}&url=https://www.amazon.com/dp/${productId}`);
+        const response = await request(url);
         res.json(JSON.parse(response));
 
     } catch (error) {
