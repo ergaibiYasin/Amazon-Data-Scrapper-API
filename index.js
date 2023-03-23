@@ -44,8 +44,8 @@ app.get('/amazon/products/:productId', async(req, res) => {
         let availability = document.body.querySelector('#availability').innerText; 
         let formattedAvailability = availability.replace(/[^0-9]/g, '').trim();
 
-        // Get price
-        let price = document.body.querySelector('apexPriceToPay').innerText;
+        // // Get price
+        // let price = document.body.querySelector('apexPriceToPay').innerText;
 
         // // Get product description
         // let description = document.body.querySelector('#renewedProgramDescriptionAtf').innerText;
