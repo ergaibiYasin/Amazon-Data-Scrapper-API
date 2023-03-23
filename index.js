@@ -19,25 +19,69 @@ app.get('/', (req, res) => {
 //---------------------------------------------------------------------------
 app.get('/amazon/products/:productId', async(req, res) => {
     const { productId } = req.params;
-    console.log(productId);
-    const browser = await puppeteer.launch();
+    const url = `https://www.amazon.fr/dp/${productId}`
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
+
     // Navigate to Amazon product page
-    await page.goto(`https://www.amazon.com/dp/${productId}`);
+    await page.goto(url, {waitUntil: 'domcontentloaded'});
+    await page.waitForSelector('body');
 
-    console.log(page);
-    
-    // // Wait for product title to be visible
-    // await page.waitForSelector('#productTitle');
+    const product = await page.evaluate (() => {
+        // Get product title 
+        let title = document.body.querySelector('#productTitle').innerHTML;
 
-    // // Scrape product information
-    // const productTitle = await page.$eval('#productTitle', el => el.innerText.trim());
-    // const productPrice = await page.$eval('#priceblock_ourprice', el => el.innerText.trim());
-    // const productImage = await page.$eval('#landingImage', el => el.getAttribute('src'));
+        // Get review count
+        let reviewCount = document.body.querySelector('#acrCustomerReviewText').innerText;
+        let formattedReviewCount = reviewCount.replace(/[^0-9]/g,'').trim();
 
-    // console.log('Product Title:', productTitle);
-    // console.log('Product Price:', productPrice);
-    // console.log('Product Image:', productImage);
+        // Get and format rating
+        let ratingElement = document.body.querySelector('.a-icon.a-icon-star').getAttribute('class');
+        let integer = ratingElement.replace(/[^0-9]/g,'').trim();
+        let parsedRating = parseInt(integer) / 10;
+
+        // Get availability
+        let availability = document.body.querySelector('#availability').innerText; 
+        let formattedAvailability = availability.replace(/[^0-9]/g, '').trim();
+
+        // Get price
+        let price = document.body.querySelector('apexPriceToPay').innerText;
+
+        // // Get product description
+        // let description = document.body.querySelector('#renewedProgramDescriptionAtf').innerText;
+
+        // // Get product features
+        // let features = document.body.querySelectorAll('#feature-bullets ul li');
+        // let formattedFeatures = [];
+
+        // features.forEach((feature) => {
+        //     formattedFeatures.push(feature.innerText);
+        // });
+
+        // // Get comparable items
+        // let comparableItems = document.body.querySelectorAll('#HLCXComparisonTable .comparison_table_image_row .a-link-normal');                
+        // formattedComparableItems = [];
+
+        // comparableItems.forEach((item) => {
+        //     formattedComparableItems.push("https://amazon.com" + item.getAttribute('href'));
+        // });
+
+        
+        var product = { 
+            "title": title,
+            "reviewCount" : formattedReviewCount,
+            "rating": parsedRating,
+            "availability": formattedAvailability,
+            "price": price,
+            // "description": description,
+            // "features": formattedFeatures,
+            // "comparableItems": formattedComparableItems
+        };
+
+        return product;
+    })
+
+    console.log(product);
     
     await browser.close();
 
